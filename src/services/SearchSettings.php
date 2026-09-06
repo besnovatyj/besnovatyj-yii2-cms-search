@@ -166,7 +166,9 @@ final class SearchSettings
      */
     private function splitList(string $raw): array
     {
-        $parts = preg_split('/[,\R]+/u', $raw) ?: [];
+        // Именно \r\n перечислением: escape-последовательность \R (любой перевод строки) внутри
+        // символьного класса PCRE недопустима и роняет компиляцию шаблона.
+        $parts = preg_split('/[,\r\n]+/u', $raw) ?: [];
 
         return array_values(array_filter(array_map('trim', $parts), static fn (string $v): bool => $v !== ''));
     }
