@@ -83,9 +83,11 @@ final class Indexer
 
         $this->report($progress, 'Сборка индекса ядром «' . $engineKey . '»…');
 
-        $engine->beginRebuild();
-
         try {
+            // Начало сборки — тоже внутри try: если ядро упадёт на создании индекса, недоделанный
+            // слот должен быть убран той же веткой отката, а не остаться до следующего запуска.
+            $engine->beginRebuild();
+
             $documents = 0;
             foreach ($this->catalogBatches() as $batch) {
                 $engine->addDocuments($batch);
