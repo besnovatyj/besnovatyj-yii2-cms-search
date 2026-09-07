@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace Besnovatyj\Search\services;
+namespace Besnovatyj\Search\results;
 
 /**
  * Итог переиндексации — то, что показывается администратору в консоли и в админке.

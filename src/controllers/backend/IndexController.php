@@ -9,10 +9,12 @@ declare(strict_types=1);
 namespace Besnovatyj\Search\controllers\backend;
 
 use Besnovatyj\Search\entities\SearchDocumentRecord;
+use Besnovatyj\Search\services\EngineRegistry;
 use Besnovatyj\Search\services\EngineResolver;
 use Besnovatyj\Search\services\Indexer;
 use Besnovatyj\Search\services\IndexState;
 use Besnovatyj\Search\services\SourceRegistry;
+use Besnovatyj\Search\settings\SearchSettings;
 use Throwable;
 use Yii;
 use yii\filters\VerbFilter;
@@ -32,9 +34,11 @@ class IndexController extends Controller
         $id,
         $module,
         private readonly EngineResolver $engines,
+        private readonly EngineRegistry $registry,
         private readonly SourceRegistry $sources,
         private readonly IndexState $state,
         private readonly Indexer $indexer,
+        private readonly SearchSettings $settings,
         $config = [],
     ) {
         parent::__construct($id, $module, $config);
@@ -62,9 +66,12 @@ class IndexController extends Controller
 
         return $this->render('index', [
             'engineKey' => $engineKey,
+            'engineLabel' => $this->registry->labelFor($engineKey),
             'engine' => $engine,
             'capabilities' => $engine?->capabilities(),
             'engineAvailable' => $engine?->isAvailable() ?? false,
+            'installedEngines' => $this->installedEngines(),
+            'fallbackKey' => $this->settings->fallbackEngine,
             'sources' => $this->sources->enabledSources(),
             'disabled' => array_diff_key($this->sources->allSources(), $this->sources->enabledSources()),
             'counts' => $this->catalogCounts(),
@@ -103,6 +110,29 @@ class IndexController extends Controller
         }
 
         return $this->redirect(['index']);
+    }
+
+    /**
+     * Установленные ядра с их состоянием — чтобы на странице было видно, из чего вообще есть выбор
+     * и почему выбранное не работает.
+     *
+     * @return list<array{key:string,label:string,available:bool}>
+     */
+    private function installedEngines(): array
+    {
+        $rows = [];
+
+        foreach ($this->registry->descriptors() as $key => $descriptor) {
+            $engine = $this->registry->engine($key);
+
+            $rows[] = [
+                'key' => $key,
+                'label' => $descriptor->label,
+                'available' => $engine?->isAvailable() ?? false,
+            ];
+        }
+
+        return $rows;
     }
 
     /**

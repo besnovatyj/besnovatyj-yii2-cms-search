@@ -9,30 +9,35 @@ declare(strict_types=1);
 namespace Besnovatyj\Search\services;
 
 use Besnovatyj\Search\contracts\SearchEngineInterface;
+use Besnovatyj\Search\settings\SearchSettings;
 use Yii;
-use yii\base\InvalidConfigException;
 
 /**
- * Резолвер активного ядра поиска.
+ * Выбор ядра, которое обслуживает запросы прямо сейчас.
  *
- * Ядра объявлены в конфиге модуля картой «ключ => FQCN» строками — ровно как адаптеры редактора:
- * пока пакет ядра не установлен, строка безвредна (автозагрузку не триггерит), а резолвер проверяет
- * `class_exists()` перед созданием. Добавить движок = поставить пакет и дописать строку в карту.
+ * Кто установлен — знает {@see EngineRegistry}; здесь решается, кем из установленных работать:
+ * выбранным в настройках, а если оно не отвечает (упавший демон, потерянное соединение) —
+ * запасным. Посетитель получает результаты, а не HTTP 500: при двух установленных ядрах отказ
+ * движка перестаёт быть аварией.
  *
- * Здесь же живёт деградация: если активное ядро не отвечает (упавший демон, потерянное соединение),
- * фасад молча переходит на запасное ядро, которое работает в той же базе и всегда под рукой.
- * Посетитель получает результаты, а не HTTP 500 — при двух установленных ядрах отказ движка
- * перестаёт быть аварией.
+ * Проверка доступности выполняется один раз за запрос: она стоит обращения к демону, а на странице
+ * поиск вызывается не единожды.
  */
 final class EngineResolver
 {
-    /** @var array<string, SearchEngineInterface|null> */
-    private array $instances = [];
-
+    /** Ключ ядра, которым решено работать; null — решение ещё не принято, '' — рабочего ядра нет. */
     private ?string $resolvedKey = null;
 
-    public function __construct(private readonly SearchSettings $settings)
+    public function __construct(
+        private readonly EngineRegistry $registry,
+        private readonly SearchSettings $settings,
+    ) {
+    }
+
+    /** Ключ ядра, выбранного администратором (без учёта деградации). */
+    public function configuredKey(): string
     {
+        return $this->settings->engine;
     }
 
     /**
@@ -46,26 +51,17 @@ final class EngineResolver
         return (string)$this->resolvedKey;
     }
 
-    /** Ключ ядра, выбранного администратором (без учёта деградации). */
-    public function configuredKey(): string
-    {
-        return $this->settings->engine();
-    }
-
     /**
      * Рабочее ядро: выбранное в настройках, иначе запасное, иначе null.
-     *
-     * Проверка доступности выполняется один раз за запрос — результат запоминается, чтобы каждый
-     * поиск на странице не дёргал соединение заново.
      */
     public function active(): ?SearchEngineInterface
     {
         if ($this->resolvedKey !== null) {
-            return $this->instances[$this->resolvedKey] ?? null;
+            return $this->registry->engine($this->resolvedKey);
         }
 
-        $configured = $this->settings->engine();
-        $engine = $this->engine($configured);
+        $configured = $this->settings->engine;
+        $engine = $this->registry->engine($configured);
 
         if ($engine !== null && $engine->isAvailable()) {
             $this->resolvedKey = $configured;
@@ -73,9 +69,11 @@ final class EngineResolver
             return $engine;
         }
 
-        $fallbackKey = $this->settings->fallbackEngine();
+        $fallbackKey = $this->settings->fallbackEngine;
+
         if ($fallbackKey !== '' && $fallbackKey !== $configured) {
-            $fallback = $this->engine($fallbackKey);
+            $fallback = $this->registry->engine($fallbackKey);
+
             if ($fallback !== null && $fallback->isAvailable()) {
                 Yii::warning(
                     "Ядро поиска «{$configured}» недоступно, выдача обслуживается запасным «{$fallbackKey}».",
@@ -99,64 +97,6 @@ final class EngineResolver
      */
     public function engine(string $key): ?SearchEngineInterface
     {
-        if ($key === '') {
-            return null;
-        }
-
-        if (array_key_exists($key, $this->instances)) {
-            return $this->instances[$key];
-        }
-
-        $class = $this->settings->adapters()[$key] ?? null;
-
-        if ($class === null) {
-            Yii::warning("Ядро поиска «{$key}» не объявлено в карте adapters.", 'search/engine');
-
-            return $this->instances[$key] = null;
-        }
-
-        if (!class_exists($class)) {
-            Yii::warning("Пакет ядра поиска «{$key}» не установлен (нет класса {$class}).", 'search/engine');
-
-            return $this->instances[$key] = null;
-        }
-
-        try {
-            $engine = Yii::createObject($class);
-        } catch (InvalidConfigException $e) {
-            Yii::error("Не удалось создать ядро поиска «{$key}»: " . $e->getMessage(), 'search/engine');
-
-            return $this->instances[$key] = null;
-        }
-
-        if (!$engine instanceof SearchEngineInterface) {
-            Yii::error(
-                "Класс {$class} не реализует " . SearchEngineInterface::class . ".",
-                'search/engine',
-            );
-
-            return $this->instances[$key] = null;
-        }
-
-        return $this->instances[$key] = $engine;
-    }
-
-    /**
-     * Установленные ядра — для выпадающего списка в админке и страницы состояния.
-     *
-     * @return array<string, SearchEngineInterface>
-     */
-    public function installed(): array
-    {
-        $engines = [];
-
-        foreach (array_keys($this->settings->adapters()) as $key) {
-            $engine = $this->engine((string)$key);
-            if ($engine !== null) {
-                $engines[(string)$key] = $engine;
-            }
-        }
-
-        return $engines;
+        return $this->registry->engine($key);
     }
 }

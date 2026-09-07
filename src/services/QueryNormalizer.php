@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 namespace Besnovatyj\Search\services;
 
+use Besnovatyj\Search\settings\SearchSettings;
+
 /**
  * Подготовка пользовательского запроса перед передачей в ядро.
  *
@@ -39,7 +41,7 @@ final class QueryNormalizer
             return '';
         }
 
-        $text = mb_substr(trim($raw), 0, $this->settings->maxQueryLength());
+        $text = mb_substr(trim($raw), 0, $this->settings->maxQueryLength);
 
         // Оставляем буквы, цифры, пробелы и дефис — остальное могло бы попасть в синтаксис движка.
         $text = preg_replace('/[^\p{L}\p{N}\s\-]+/u', ' ', $text) ?? '';
@@ -60,7 +62,7 @@ final class QueryNormalizer
      */
     public function isSearchable(string $normalized): bool
     {
-        return mb_strlen($normalized) >= $this->settings->minQueryLength();
+        return mb_strlen($normalized) >= $this->settings->minQueryLength;
     }
 
     /**
@@ -72,7 +74,7 @@ final class QueryNormalizer
      */
     public function expand(string $normalized): string
     {
-        $groups = $this->settings->synonymGroups();
+        $groups = $this->settings->synonymGroups;
 
         if ($groups === [] || $normalized === '') {
             return $normalized;

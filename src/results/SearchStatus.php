@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace Besnovatyj\Search\services;
+namespace Besnovatyj\Search\results;
 
 /**
  * Чем закончился поиск — чтобы страница выдачи объясняла пустой экран, а не молчала.

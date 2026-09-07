@@ -11,6 +11,8 @@ namespace Besnovatyj\Search\services;
 use Besnovatyj\Contracts\search\SearchDocument;
 use Besnovatyj\Search\contracts\IndexableDocument;
 use Besnovatyj\Search\entities\SearchDocumentRecord;
+use Besnovatyj\Search\results\IndexReport;
+use Besnovatyj\Search\settings\SearchSettings;
 use RuntimeException;
 use Throwable;
 use Yii;
@@ -61,7 +63,7 @@ final class Indexer
      * @param callable(string):void|null $progress Обратный вызов для вывода хода работы
      *                                            (консоль печатает, админка игнорирует).
      *
-     * @throws RuntimeException если выбранное ядро не установлено — молча собирать индекс
+     * @throws RuntimeException если выбранного ядра нет в системе — молча собирать индекс
      *                          «в никуда» нельзя, это выглядело бы как успешная операция.
      */
     public function rebuild(?callable $progress = null): IndexReport
@@ -69,12 +71,12 @@ final class Indexer
         $startedAt = microtime(true);
         $stamp = time();
 
-        $engineKey = $this->settings->engine();
+        $engineKey = $this->settings->engine;
         $engine = $this->engines->engine($engineKey);
 
         if ($engine === null) {
             throw new RuntimeException(
-                "Ядро поиска «{$engineKey}» недоступно: пакет не установлен или не объявлен в карте adapters.",
+                "Ядро поиска «{$engineKey}» недоступно: модуль ядра не установлен или выключен.",
             );
         }
 

@@ -6,11 +6,20 @@
 
 declare(strict_types=1);
 
+use Besnovatyj\Search\settings\EngineOptionItems;
+use Besnovatyj\Search\settings\FallbackEngineOptionItems;
+
 /**
  * Опции модуля настроек `yii2-cms-config` для фасада поиска.
  *
- * Пути указывают в `modules.Search.params.*` — оттуда их читает {@see \Besnovatyj\Search\services\SearchSettings}.
- * Список движков в `range`/`items` держать синхронно с картой 'adapters' в config.php.
+ * Пути указывают в `modules.Search.params.*` — оттуда их читает
+ * {@see \Besnovatyj\Search\settings\SearchSettingsFactory}.
+ *
+ * Список ядер не перечисляется: он равен составу установленных модулей-ядер, поэтому собирается
+ * поставщиком вариантов ({@see \Besnovatyj\Contracts\config\OptionItemsProvider}) в момент показа
+ * формы. Сам файл при этом остаётся статичным — менеджер модулей считает от него контрольную сумму
+ * манифеста, и «плавающий» список помечал бы фасад изменившимся при каждой установке ядра.
+ * Правило «значение из списка» модуль настроек добавляет к таким опциям сам.
  *
  * Смена ядра или правка списка синонимов/весов требуют пересборки индекса: стеммер и веса
  * «запекаются» в индекс при индексации. Модуль сообщает об этом на своей странице состояния,
@@ -25,32 +34,21 @@ return [
         'category'    => 'Search',
         'rules'       => [
             ['required'],
-            ['in', 'range' => ['tnt', 'manticore']],
         ],
         'inputOptions' => [
-            'type'  => 'dropdown',
-            'items' => [
-                'tnt'       => 'TNTSearch (в базе проекта)',
-                'manticore' => 'Manticore Search (отдельный демон)',
-            ],
+            'type'          => 'dropdown',
+            'itemsProvider' => EngineOptionItems::class,
         ],
     ],
 
     'search_fallback_engine' => [
         'path'        => 'modules.Search.params.fallbackEngine',
         'label'       => '[Search] Запасное ядро',
-        'description' => 'Используется, если активное ядро не отвечает; пусто — выдача остаётся пустой',
+        'description' => 'Используется, если активное ядро не отвечает; «Нет» — выдача остаётся пустой',
         'category'    => 'Search',
-        'rules'       => [
-            ['in', 'range' => ['', 'tnt', 'manticore']],
-        ],
         'inputOptions' => [
-            'type'  => 'dropdown',
-            'items' => [
-                ''          => 'Нет',
-                'tnt'       => 'TNTSearch (в базе проекта)',
-                'manticore' => 'Manticore Search (отдельный демон)',
-            ],
+            'type'          => 'dropdown',
+            'itemsProvider' => FallbackEngineOptionItems::class,
         ],
     ],
 
@@ -101,6 +99,20 @@ return [
         'rules'       => [
             ['required'],
             ['integer', 'min' => 1, 'max' => 10],
+        ],
+        'inputOptions' => [
+            'type' => 'number',
+        ],
+    ],
+
+    'search_max_query_length' => [
+        'path'        => 'modules.Search.params.maxQueryLength',
+        'label'       => '[Search] Предельная длина запроса',
+        'description' => 'Всё, что длиннее, отбрасывается до обращения к ядру',
+        'category'    => 'Search',
+        'rules'       => [
+            ['required'],
+            ['integer', 'min' => 16, 'max' => 1000],
         ],
         'inputOptions' => [
             'type' => 'number',

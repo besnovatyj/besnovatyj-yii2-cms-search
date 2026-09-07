@@ -18,9 +18,12 @@ use yii\web\View;
  *
  * @var View                          $this
  * @var string                        $engineKey
+ * @var string                        $engineLabel
  * @var SearchEngineInterface|null    $engine
  * @var EngineCapabilities|null       $capabilities
  * @var bool                          $engineAvailable
+ * @var list<array{key:string,label:string,available:bool}> $installedEngines
+ * @var string                        $fallbackKey
  * @var array<string, SearchSource>   $sources
  * @var array<string, SearchSource>   $disabled
  * @var array<string, int>            $counts
@@ -38,14 +41,26 @@ $yesNo = static fn (bool $value): string => $value
 <div class="search-index-status">
     <h1 class="h4 mb-3"><?= Html::encode($this->title) ?></h1>
 
-    <?php if ($engine === null): ?>
+    <?php if ($installedEngines === []): ?>
         <div class="alert alert-danger">
-            Ядро поиска «<?= Html::encode($engineKey) ?>» недоступно: пакет не установлен или не объявлен
-            в карте адаптеров модуля. Пока ядра нет, страница поиска будет отдавать пустую выдачу.
+            В системе нет ни одного ядра поиска. Установите и включите модуль ядра
+            (например, «Поиск: TNTSearch» или «Поиск: Manticore») — до этого страница поиска
+            будет отдавать пустую выдачу.
+        </div>
+    <?php elseif ($engine === null): ?>
+        <div class="alert alert-danger">
+            Ядро «<?= Html::encode($engineKey === '' ? 'не выбрано' : $engineKey) ?>» недоступно:
+            модуль ядра не установлен или выключен в менеджере модулей. Выберите ядро из установленных
+            в настройках приложения (раздел «Search»).
         </div>
     <?php elseif (!$engineAvailable): ?>
         <div class="alert alert-warning">
-            Ядро «<?= Html::encode($engineKey) ?>» установлено, но сейчас не отвечает.
+            Ядро «<?= Html::encode($engineLabel) ?>» включено, но сейчас не отвечает.
+            <?php if ($fallbackKey !== ''): ?>
+                Выдачу обслуживает запасное ядро «<?= Html::encode($fallbackKey) ?>».
+            <?php else: ?>
+                Запасное ядро не задано, поэтому выдача остаётся пустой.
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 
@@ -61,7 +76,7 @@ $yesNo = static fn (bool $value): string => $value
                     <tbody>
                         <tr>
                             <th style="width: 45%">Ядро</th>
-                            <td><?= Html::encode($engineKey === '' ? 'не выбрано' : $engineKey) ?></td>
+                            <td><?= Html::encode($engineKey === '' ? 'не выбрано' : $engineLabel) ?></td>
                         </tr>
                         <tr>
                             <th>Собран</th>
@@ -113,6 +128,51 @@ $yesNo = static fn (bool $value): string => $value
                     </table>
                 <?php endif; ?>
             </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Установленные ядра</div>
+        <table class="table table-sm mb-0">
+            <thead>
+                <tr>
+                    <th>Ключ</th>
+                    <th>Ядро</th>
+                    <th>Отвечает</th>
+                    <th>Роль</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($installedEngines as $row): ?>
+                    <tr>
+                        <td><code><?= Html::encode($row['key']) ?></code></td>
+                        <td><?= Html::encode($row['label']) ?></td>
+                        <td><?= $yesNo($row['available']) ?></td>
+                        <td>
+                            <?php if ($row['key'] === $engineKey): ?>
+                                <span class="badge text-bg-primary">активное</span>
+                            <?php elseif ($row['key'] === $fallbackKey): ?>
+                                <span class="badge text-bg-secondary">запасное</span>
+                            <?php else: ?>
+                                <span class="text-muted">—</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+
+                <?php if ($installedEngines === []): ?>
+                    <tr>
+                        <td colspan="4" class="text-muted">
+                            Ни один модуль не объявил ядро поиска: нужен модуль, реализующий
+                            <code>SearchEngineProvider</code>.
+                        </td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+        <div class="card-footer text-muted small">
+            Список равен составу включённых модулей-ядер: выключенное в менеджере модулей ядро
+            исчезает и отсюда, и из выбора в настройках.
         </div>
     </div>
 

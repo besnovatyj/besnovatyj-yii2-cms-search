@@ -7,9 +7,9 @@
 declare(strict_types=1);
 
 use Besnovatyj\Search\forms\frontend\SearchForm;
-use Besnovatyj\Search\services\SearchResultItem;
-use Besnovatyj\Search\services\SearchResultPage;
-use Besnovatyj\Search\services\SearchStatus;
+use Besnovatyj\Search\results\SearchResultItem;
+use Besnovatyj\Search\results\SearchResultPage;
+use Besnovatyj\Search\results\SearchStatus;
 use yii\bootstrap5\LinkPager;
 use yii\data\Pagination;
 use yii\helpers\Html;

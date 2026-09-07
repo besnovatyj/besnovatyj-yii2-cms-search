@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace Besnovatyj\Search\services;
+namespace Besnovatyj\Search\results;
 
 /**
  * Одна карточка поисковой выдачи — готовая к выводу, без обращения к базе из шаблона.

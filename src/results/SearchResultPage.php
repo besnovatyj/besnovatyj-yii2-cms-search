@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace Besnovatyj\Search\services;
+namespace Besnovatyj\Search\results;
 
 /**
  * Готовая страница поисковой выдачи со всем, что нужно шаблону.
@@ -18,19 +18,19 @@ namespace Besnovatyj\Search\services;
 final readonly class SearchResultPage
 {
     /**
-     * @param list<SearchResultItem>                                    $items      Карточки текущей страницы.
-     * @param int                                                       $total      Всего совпадений.
-     * @param int                                                       $page       Текущая страница, с 1.
-     * @param int                                                       $perPage    Размер страницы.
-     * @param list<array{type:string,label:string,count:int,active:bool}> $facets   Вкладки по типам контента.
-     *                                                                              Пустой список — фасеты
-     *                                                                              не поддержаны ядром либо
-     *                                                                              источник всего один.
-     * @param string                                                    $query      Нормализованный запрос —
-     *                                                                              его же показываем в поле ввода.
-     * @param list<string>                                              $types      Активный фильтр по типам.
-     * @param string|null                                               $suggestion «Возможно, вы имели в виду».
-     * @param SearchStatus                                              $status     Чем закончился поиск.
+     * @param list<SearchResultItem>                                      $items      Карточки текущей страницы.
+     * @param int                                                         $total      Всего совпадений.
+     * @param int                                                         $page       Текущая страница, с 1.
+     * @param int                                                         $perPage    Размер страницы.
+     * @param list<array{type:string,label:string,count:int,active:bool}> $facets     Вкладки по типам контента.
+     *                                                                                Пустой список — фасеты
+     *                                                                                не поддержаны ядром либо
+     *                                                                                источник всего один.
+     * @param string                                                      $query      Нормализованный запрос —
+     *                                                                                его же показываем в поле ввода.
+     * @param list<string>                                                $types      Активный фильтр по типам.
+     * @param string|null                                                 $suggestion «Возможно, вы имели в виду».
+     * @param SearchStatus                                                $status     Чем закончился поиск.
      */
     public function __construct(
         public array $items,

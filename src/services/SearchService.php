@@ -12,6 +12,10 @@ use Besnovatyj\Search\contracts\SearchEngineInterface;
 use Besnovatyj\Search\contracts\SearchHit;
 use Besnovatyj\Search\contracts\SearchQuery;
 use Besnovatyj\Search\entities\SearchDocumentRecord;
+use Besnovatyj\Search\results\SearchResultItem;
+use Besnovatyj\Search\results\SearchResultPage;
+use Besnovatyj\Search\results\SearchStatus;
+use Besnovatyj\Search\settings\SearchSettings;
 use Throwable;
 use Yii;
 
@@ -42,7 +46,7 @@ final class SearchService
      */
     public function search(?string $rawQuery, array $types = [], int $page = 1): SearchResultPage
     {
-        $perPage = $this->settings->perPage();
+        $perPage = $this->settings->perPage;
         $types = $this->sources->filterTypes($types);
         $query = $this->normalizer->normalize($rawQuery);
 
@@ -125,7 +129,7 @@ final class SearchService
             ->indexBy('id')
             ->all();
 
-        $snippetLength = $this->settings->snippetLength();
+        $snippetLength = $this->settings->snippetLength;
         $items = [];
 
         foreach ($hits as $hit) {

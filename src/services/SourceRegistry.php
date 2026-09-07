@@ -10,6 +10,7 @@ namespace Besnovatyj\Search\services;
 
 use Besnovatyj\Contracts\search\SearchableProvider;
 use Besnovatyj\Contracts\search\SearchSource;
+use Besnovatyj\Search\settings\SearchSettings;
 use Yii;
 
 /**
@@ -102,7 +103,7 @@ final class SourceRegistry
      */
     public function enabledSources(): array
     {
-        $disabled = array_flip($this->settings->disabledSources());
+        $disabled = array_flip($this->settings->disabledSources);
 
         return array_filter(
             $this->allSources(),
@@ -146,7 +147,7 @@ final class SourceRegistry
      */
     public function boostFor(string $type): float
     {
-        $overrides = $this->settings->boosts();
+        $overrides = $this->settings->boosts;
         if (isset($overrides[$type])) {
             return $overrides[$type];
         }

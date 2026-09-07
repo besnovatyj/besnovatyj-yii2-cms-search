@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace Besnovatyj\Search\commands;
 
+use Besnovatyj\Search\services\EngineRegistry;
 use Besnovatyj\Search\services\EngineResolver;
 use Besnovatyj\Search\services\Indexer;
 use Besnovatyj\Search\services\IndexState;
@@ -35,6 +36,7 @@ final class IndexController extends Controller
         private readonly Indexer $indexer,
         private readonly IndexState $state,
         private readonly EngineResolver $engines,
+        private readonly EngineRegistry $registry,
         private readonly SourceRegistry $sources,
         $config = [],
     ) {
@@ -93,6 +95,21 @@ final class IndexController extends Controller
         $reason = $this->state->staleReason($engineKey);
         if ($reason !== null) {
             $this->stdout('! ' . $reason . "\n", Console::FG_YELLOW);
+        }
+
+        $this->stdout("\nУстановленные ядра:\n", Console::BOLD);
+        foreach ($this->registry->descriptors() as $key => $descriptor) {
+            $available = $this->registry->engine($key)?->isAvailable() ?? false;
+            $this->stdout(sprintf(
+                "  %-12s %-40s %s\n",
+                $key,
+                $descriptor->label,
+                $available ? 'отвечает' : 'не отвечает',
+            ), $available ? Console::FG_GREEN : Console::FG_RED);
+        }
+
+        if ($this->registry->descriptors() === []) {
+            $this->stdout("  нет ни одного: установите модуль ядра поиска\n", Console::FG_YELLOW);
         }
 
         $this->stdout("\nИсточники:\n", Console::BOLD);
