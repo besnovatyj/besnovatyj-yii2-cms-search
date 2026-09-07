@@ -70,6 +70,7 @@ class IndexController extends Controller
             'engine' => $engine,
             'capabilities' => $engine?->capabilities(),
             'engineAvailable' => $engine?->isAvailable() ?? false,
+            'engineReason' => $engine?->unavailableReason(),
             'installedEngines' => $this->installedEngines(),
             'fallbackKey' => $this->settings->fallbackEngine,
             'sources' => $this->sources->enabledSources(),
@@ -116,7 +117,7 @@ class IndexController extends Controller
      * Установленные ядра с их состоянием — чтобы на странице было видно, из чего вообще есть выбор
      * и почему выбранное не работает.
      *
-     * @return list<array{key:string,label:string,available:bool}>
+     * @return list<array{key:string,label:string,available:bool,reason:string|null}>
      */
     private function installedEngines(): array
     {
@@ -129,6 +130,7 @@ class IndexController extends Controller
                 'key' => $key,
                 'label' => $descriptor->label,
                 'available' => $engine?->isAvailable() ?? false,
+                'reason' => $engine?->unavailableReason() ?? 'Ядро не удалось создать — см. журнал приложения.',
             ];
         }
 

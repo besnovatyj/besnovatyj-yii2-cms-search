@@ -76,7 +76,12 @@ final class EngineResolver
 
             if ($fallback !== null && $fallback->isAvailable()) {
                 Yii::warning(
-                    "Ядро поиска «{$configured}» недоступно, выдача обслуживается запасным «{$fallbackKey}».",
+                    sprintf(
+                        'Ядро поиска «%s» недоступно (%s), выдача обслуживается запасным «%s».',
+                        $configured,
+                        $engine?->unavailableReason() ?? 'ядро не установлено',
+                        $fallbackKey,
+                    ),
                     'search/engine',
                 );
                 $this->resolvedKey = $fallbackKey;
@@ -85,7 +90,14 @@ final class EngineResolver
             }
         }
 
-        Yii::error("Ни одно ядро поиска недоступно (выбрано «{$configured}»).", 'search/engine');
+        Yii::error(
+            sprintf(
+                'Ни одно ядро поиска недоступно (выбрано «%s»: %s).',
+                $configured,
+                $engine?->unavailableReason() ?? 'ядро не установлено',
+            ),
+            'search/engine',
+        );
         $this->resolvedKey = '';
 
         return null;

@@ -22,7 +22,8 @@ use yii\web\View;
  * @var SearchEngineInterface|null    $engine
  * @var EngineCapabilities|null       $capabilities
  * @var bool                          $engineAvailable
- * @var list<array{key:string,label:string,available:bool}> $installedEngines
+ * @var string|null                   $engineReason
+ * @var list<array{key:string,label:string,available:bool,reason:string|null}> $installedEngines
  * @var string                        $fallbackKey
  * @var array<string, SearchSource>   $sources
  * @var array<string, SearchSource>   $disabled
@@ -55,12 +56,17 @@ $yesNo = static fn (bool $value): string => $value
         </div>
     <?php elseif (!$engineAvailable): ?>
         <div class="alert alert-warning">
-            Ядро «<?= Html::encode($engineLabel) ?>» включено, но сейчас не отвечает.
-            <?php if ($fallbackKey !== ''): ?>
-                Выдачу обслуживает запасное ядро «<?= Html::encode($fallbackKey) ?>».
-            <?php else: ?>
-                Запасное ядро не задано, поэтому выдача остаётся пустой.
+            <div>Ядро «<?= Html::encode($engineLabel) ?>» включено, но пока не обслуживает поиск.</div>
+            <?php if ($engineReason !== null): ?>
+                <div class="mt-1"><strong>Причина:</strong> <?= Html::encode($engineReason) ?></div>
             <?php endif; ?>
+            <div class="mt-1">
+                <?php if ($fallbackKey !== ''): ?>
+                    Выдачу пока обслуживает запасное ядро «<?= Html::encode($fallbackKey) ?>».
+                <?php else: ?>
+                    Запасное ядро не задано, поэтому выдача остаётся пустой.
+                <?php endif; ?>
+            </div>
         </div>
     <?php endif; ?>
 
@@ -138,7 +144,7 @@ $yesNo = static fn (bool $value): string => $value
                 <tr>
                     <th>Ключ</th>
                     <th>Ядро</th>
-                    <th>Отвечает</th>
+                    <th>Состояние</th>
                     <th>Роль</th>
                 </tr>
             </thead>
@@ -147,7 +153,13 @@ $yesNo = static fn (bool $value): string => $value
                     <tr>
                         <td><code><?= Html::encode($row['key']) ?></code></td>
                         <td><?= Html::encode($row['label']) ?></td>
-                        <td><?= $yesNo($row['available']) ?></td>
+                        <td>
+                            <?php if ($row['available']): ?>
+                                <span class="text-success">готово</span>
+                            <?php else: ?>
+                                <span class="text-warning"><?= Html::encode((string)$row['reason']) ?></span>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <?php if ($row['key'] === $engineKey): ?>
                                 <span class="badge text-bg-primary">активное</span>

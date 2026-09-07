@@ -82,8 +82,13 @@ final class IndexController extends Controller
         $this->stdout("Ядро:      ", Console::BOLD);
         $this->stdout($engineKey === '' ? "не выбрано\n" : $engineKey . "\n");
 
+        $available = $engine?->isAvailable() ?? false;
         $this->stdout("Доступно:  ", Console::BOLD);
-        $this->stdout($engine?->isAvailable() ? "да\n" : "нет\n", $engine?->isAvailable() ? Console::FG_GREEN : Console::FG_RED);
+        $this->stdout($available ? "да\n" : "нет\n", $available ? Console::FG_GREEN : Console::FG_RED);
+
+        if (!$available) {
+            $this->stdout('           ' . ($engine?->unavailableReason() ?? 'ядро не установлено') . "\n", Console::FG_YELLOW);
+        }
 
         $rebuiltAt = $this->state->rebuiltAt();
         $this->stdout("Собран:    ", Console::BOLD);
@@ -99,13 +104,14 @@ final class IndexController extends Controller
 
         $this->stdout("\nУстановленные ядра:\n", Console::BOLD);
         foreach ($this->registry->descriptors() as $key => $descriptor) {
-            $available = $this->registry->engine($key)?->isAvailable() ?? false;
+            $installed = $this->registry->engine($key);
+            $ready = $installed?->isAvailable() ?? false;
             $this->stdout(sprintf(
                 "  %-12s %-40s %s\n",
                 $key,
                 $descriptor->label,
-                $available ? 'отвечает' : 'не отвечает',
-            ), $available ? Console::FG_GREEN : Console::FG_RED);
+                $ready ? 'готово' : ($installed?->unavailableReason() ?? 'ядро не удалось создать'),
+            ), $ready ? Console::FG_GREEN : Console::FG_YELLOW);
         }
 
         if ($this->registry->descriptors() === []) {
