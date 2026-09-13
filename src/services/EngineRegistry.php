@@ -11,6 +11,7 @@ namespace Besnovatyj\Search\services;
 use Besnovatyj\Search\contracts\SearchEngineDescriptor;
 use Besnovatyj\Search\contracts\SearchEngineInterface;
 use Besnovatyj\Search\contracts\SearchEngineProvider;
+use Besnovatyj\Kernel\module\ModuleFinder;
 use Throwable;
 use Yii;
 
@@ -18,8 +19,8 @@ use Yii;
  * Реестр установленных ядер поиска.
  *
  * Находит модули, объявившие себя поставщиками движков ({@see SearchEngineProvider}), — тем же
- * обходом зарегистрированных модулей с проверкой `instanceof`, каким {@see SourceRegistry} находит
- * поставщиков контента. Один приём на весь пакет: фасад не знает ни одного ядра поимённо, а ядра
+ * обходом зарегистрированных модулей по контракту ({@see ModuleFinder}), каким {@see SourceRegistry}
+ * находит поставщиков контента; инстанцируются только модули-поставщики. Один приём на весь пакет: фасад не знает ни одного ядра поимённо, а ядра
  * не знают друг о друге.
  *
  * Отключённый в менеджере модуль в конфиг приложения не попадает, поэтому и в реестре не появится:
@@ -50,13 +51,7 @@ final class EngineRegistry
 
         $descriptors = [];
 
-        foreach (array_keys(Yii::$app->getModules()) as $id) {
-            $module = Yii::$app->getModule((string)$id);
-
-            if (!$module instanceof SearchEngineProvider) {
-                continue;
-            }
-
+        foreach (ModuleFinder::implementing(SearchEngineProvider::class) as $module) {
             foreach ($module->searchEngines() as $descriptor) {
                 if (isset($descriptors[$descriptor->key])) {
                     Yii::warning(

@@ -10,15 +10,16 @@ namespace Besnovatyj\Search\services;
 
 use Besnovatyj\Contracts\search\SearchableProvider;
 use Besnovatyj\Contracts\search\SearchSource;
+use Besnovatyj\Kernel\module\ModuleFinder;
 use Besnovatyj\Search\settings\SearchSettings;
 use Yii;
 
 /**
  * Реестр источников контента: находит модули-провайдеры и сводит их объявления в один список.
  *
- * Обход зарегистрированных модулей с проверкой `instanceof` — тот же приём, что в
+ * Обход зарегистрированных модулей по контракту ({@see ModuleFinder}) — тот же приём, что в
  * {@see \Besnovatyj\Menu\services\MenuTargetRegistry}: модуль поиска не знает имён контентных
- * модулей, а они не знают о нём. Отключённый в modman модуль в конфиг приложения не попадает,
+ * модулей, а они не знают о нём; инстанцируются только модули-провайдеры. Отключённый в modman модуль в конфиг приложения не попадает,
  * поэтому и в реестре не появится — отдельной проверки активности не нужно.
  *
  * Поверх объявлений накладываются настройки администратора: выключенные источники исчезают
@@ -50,15 +51,7 @@ final class SourceRegistry
             return $this->providers;
         }
 
-        $providers = [];
-        foreach (array_keys(Yii::$app->getModules()) as $id) {
-            $module = Yii::$app->getModule((string)$id);
-            if ($module instanceof SearchableProvider) {
-                $providers[(string)$id] = $module;
-            }
-        }
-
-        return $this->providers = $providers;
+        return $this->providers = ModuleFinder::implementing(SearchableProvider::class);
     }
 
     /**
