@@ -8,12 +8,15 @@ declare(strict_types=1);
 
 namespace Besnovatyj\Search;
 
+use Besnovatyj\Contracts\dashboard\DashboardWidgetDescriptor;
+use Besnovatyj\Contracts\dashboard\ProvidesDashboardWidgets;
 use Besnovatyj\Contracts\module\DeclaresModule;
 use Besnovatyj\Contracts\module\ProvidesAdminMenu;
 use Besnovatyj\Contracts\module\ProvidesDependencies;
 use Besnovatyj\Contracts\module\ProvidesMigrations;
 use Besnovatyj\Contracts\module\ProvidesOptions;
 use Besnovatyj\Kernel\module\CmsModule;
+use Besnovatyj\Search\widgets\dashboard\SearchIndexTile;
 
 /**
  * Модуль-фасад сквозного поиска по сайту.
@@ -35,6 +38,7 @@ use Besnovatyj\Kernel\module\CmsModule;
 class Module extends CmsModule implements
     DeclaresModule,
     ProvidesAdminMenu,
+    ProvidesDashboardWidgets,
     ProvidesDependencies,
     ProvidesMigrations,
     ProvidesOptions
@@ -52,4 +56,24 @@ class Module extends CmsModule implements
     public static function dependencies(): array { return require __DIR__ . '/config/dependencies.php'; }
     public static function migrationPath(): string { return __DIR__ . '/migrations'; }
     public static function migrationNamespace(): ?string { return __NAMESPACE__ . '\\migrations'; }
+
+    /**
+     * Плитка дашборда: состояние индекса (когда собран, каким ядром, сколько документов) и кнопка
+     * пересборки. Приоритет соседний с картой сайта — обе плитки отвечают на вопрос «видит ли
+     * сайт свой контент», и рядом читаются как одна пара.
+     *
+     * @return DashboardWidgetDescriptor[]
+     */
+    public static function dashboardWidgets(): array
+    {
+        return [
+            new DashboardWidgetDescriptor(
+                id: self::MODULE_ID . '.index',
+                title: 'Поисковый индекс',
+                tileClass: SearchIndexTile::class,
+                iconClass: 'bi bi-search',
+                priority: 410,
+            ),
+        ];
+    }
 }

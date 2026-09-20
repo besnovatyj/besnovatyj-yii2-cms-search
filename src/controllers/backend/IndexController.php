@@ -20,6 +20,7 @@ use Yii;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\Response;
+use yii\web\ServerErrorHttpException;
 
 /**
  * Состояние поискового индекса и его пересборка из админки.
@@ -89,10 +90,14 @@ class IndexController extends Controller
      * объёме операцию следует запускать консолью: там нет ни лимита времени веб-сервера, ни
      * занятого воркера PHP-FPM.
      */
-    public function actionRebuild(): Response
+    public function actionRebuild(): Response|array
     {
         if (function_exists('set_time_limit')) {
             @set_time_limit(600);
+        }
+
+        if (Yii::$app->request->getIsAjax()) {
+            return $this->rebuildAsJson();
         }
 
         try {
@@ -111,6 +116,47 @@ class IndexController extends Controller
         }
 
         return $this->redirect(['index']);
+    }
+
+    /**
+     * Та же пересборка, но для плитки дашборда: ответ — обновлённые счётчики, а не редирект.
+     *
+     * Сделано ответвлением одного экшена, а не вторым: операция ровно та же, и раздваивать
+     * её значило бы получить две точки, где однажды разойдутся таймаут, права и поведение.
+     * Различается только конверт ответа.
+     *
+     * Ошибки отдаются нативным JSON-конвертом Yii ({@see \yii\web\ErrorHandler}) с реальным
+     * HTTP-статусом: формат выставлен до сборки, поэтому и исключение уйдёт как JSON.
+     *
+     * @return array{engine:string,documents:int,catalog:int,seconds:float,built:string}
+     *
+     * @throws ServerErrorHttpException если сборка не удалась — причина уже в журнале.
+     */
+    private function rebuildAsJson(): array
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $report = $this->indexer->rebuild();
+        } catch (Throwable $e) {
+            Yii::error('Пересборка индекса из дашборда не удалась: ' . $e->getMessage(), 'search/index');
+
+            throw new ServerErrorHttpException('Не удалось собрать индекс: ' . $e->getMessage(), 0, $e);
+        }
+
+        $label = $this->registry->labelFor($report->engine);
+
+        return [
+            'engine' => $label,
+            'documents' => $report->documents,
+            'catalog' => $this->state->catalogCount(),
+            'seconds' => round($report->seconds, 1),
+            'built' => sprintf(
+                'Собран %s ядром «%s»',
+                Yii::$app->formatter->asRelativeTime(time()),
+                $label,
+            ),
+        ];
     }
 
     /**
