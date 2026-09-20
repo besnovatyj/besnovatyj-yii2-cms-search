@@ -27,14 +27,17 @@ use Besnovatyj\Search\settings\FallbackEngineOptionItems;
  * сайте должна оставаться осознанным действием администратора.
  */
 return [
+    /*
+     * Правила `required` здесь намеренно нет: пустое значение — штатный дефолт модуля
+     * (см. config/config.php), а форма настроек отправляется целиком, всеми разделами сразу.
+     * С `required` незаполненное ядро поиска блокировало бы сохранение вообще любой настройки
+     * приложения — в том числе на сайте, где поиск не нужен или ядро ещё не установлено.
+     */
     'search_engine' => [
         'path'        => 'modules.Search.params.engine',
         'label'       => '[Search] Активное ядро поиска',
-        'description' => 'После смены ядра индекс нужно собрать заново',
+        'description' => 'Пока ядро не выбрано, поиск ничего не находит. После смены ядра индекс нужно собрать заново',
         'category'    => 'Search',
-        'rules'       => [
-            ['required'],
-        ],
         'inputOptions' => [
             'type'          => 'dropdown',
             'itemsProvider' => EngineOptionItems::class,

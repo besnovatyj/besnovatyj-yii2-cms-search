@@ -18,9 +18,17 @@ use Besnovatyj\Search\services\EngineRegistry;
  * ядер — это состав системы, и держать его копию значило бы обновлять её при каждом новом пакете
  * и показывать администратору движки, которых нет. Заодно этот же список служит правилом
  * валидации — см. {@see OptionItemsProvider}.
+ *
+ * Первым идёт пустой вариант, повторяющий дефолт `params.engine` из `config/config.php`.
+ * Без него в `<select>` нет варианта, равного текущему значению, браузер выделяет первый
+ * попавшийся движок и отправляет его при любом сохранении формы настроек — администратор
+ * получает выбранное за него ядро с пометкой «изменено», ничего не выбирав.
  */
 final class EngineOptionItems implements OptionItemsProvider
 {
+    /** Значение «ядро не выбрано»: поиск не выполняется, выдача остаётся пустой. */
+    private const string NONE = '';
+
     public function __construct(private readonly EngineRegistry $engines)
     {
     }
@@ -30,7 +38,7 @@ final class EngineOptionItems implements OptionItemsProvider
      */
     public function items(): array
     {
-        $items = [];
+        $items = [self::NONE => 'Не выбрано'];
 
         foreach ($this->engines->descriptors() as $descriptor) {
             $items[$descriptor->key] = $descriptor->label;
