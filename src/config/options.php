@@ -35,7 +35,7 @@ return [
      */
     'search_engine' => [
         'path'        => 'modules.Search.params.engine',
-        'label'       => '[Search] Активное ядро поиска',
+        'label'       => 'Активное ядро поиска',
         'description' => 'Пока ядро не выбрано, поиск ничего не находит. После смены ядра индекс нужно собрать заново',
         'category'    => 'Search',
         'inputOptions' => [
@@ -46,7 +46,7 @@ return [
 
     'search_fallback_engine' => [
         'path'        => 'modules.Search.params.fallbackEngine',
-        'label'       => '[Search] Запасное ядро',
+        'label'       => 'Запасное ядро',
         'description' => 'Используется, если активное ядро не отвечает; «Нет» — выдача остаётся пустой',
         'category'    => 'Search',
         'inputOptions' => [
@@ -57,7 +57,7 @@ return [
 
     'search_disabled_sources' => [
         'path'        => 'modules.Search.params.disabledSources',
-        'label'       => '[Search] Исключённые из поиска разделы',
+        'label'       => 'Исключённые из поиска разделы',
         'description' => 'Ключи источников через запятую, напр.: blog.post, shop.product',
         'category'    => 'Search',
         'rules'       => [
@@ -70,7 +70,7 @@ return [
 
     'search_boosts' => [
         'path'        => 'modules.Search.params.boosts',
-        'label'       => '[Search] Веса разделов',
+        'label'       => 'Веса разделов',
         'description' => 'Ключ: множитель через запятую, напр.: blog.post: 2, page.page: 1.5',
         'category'    => 'Search',
         'rules'       => [
@@ -83,7 +83,7 @@ return [
 
     'search_synonyms' => [
         'path'        => 'modules.Search.params.synonyms',
-        'label'       => '[Search] Синонимы',
+        'label'       => 'Синонимы',
         'description' => 'Одна группа в строке, слова через запятую: врач, доктор, терапевт',
         'category'    => 'Search',
         'rules'       => [
@@ -96,7 +96,7 @@ return [
 
     'search_min_query_length' => [
         'path'        => 'modules.Search.params.minQueryLength',
-        'label'       => '[Search] Минимальная длина запроса',
+        'label'       => 'Минимальная длина запроса',
         'description' => 'Более короткие запросы не выполняются',
         'category'    => 'Search',
         'rules'       => [
@@ -110,7 +110,7 @@ return [
 
     'search_max_query_length' => [
         'path'        => 'modules.Search.params.maxQueryLength',
-        'label'       => '[Search] Предельная длина запроса',
+        'label'       => 'Предельная длина запроса',
         'description' => 'Всё, что длиннее, отбрасывается до обращения к ядру',
         'category'    => 'Search',
         'rules'       => [
@@ -124,7 +124,7 @@ return [
 
     'search_per_page' => [
         'path'        => 'modules.Search.params.perPage',
-        'label'       => '[Search] Результатов на странице',
+        'label'       => 'Результатов на странице',
         'category'    => 'Search',
         'rules'       => [
             ['required'],
@@ -137,7 +137,7 @@ return [
 
     'search_fuzzy' => [
         'path'        => 'modules.Search.params.fuzzy',
-        'label'       => '[Search] Поиск с опечатками',
+        'label'       => 'Поиск с опечатками',
         'description' => 'Применяется, только если активное ядро это умеет',
         'category'    => 'Search',
         'rules'       => [
@@ -150,7 +150,7 @@ return [
 
     'search_snippet_length' => [
         'path'        => 'modules.Search.params.snippetLength',
-        'label'       => '[Search] Длина фрагмента в выдаче',
+        'label'       => 'Длина фрагмента в выдаче',
         'category'    => 'Search',
         'rules'       => [
             ['required'],
