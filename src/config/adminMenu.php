@@ -6,6 +6,9 @@
 
 declare(strict_types=1);
 
+use Besnovatyj\Contracts\adminMenu\AdminMenuLocation;
+use Besnovatyj\Contracts\adminMenu\AdminMenuPlacement;
+
 return [
     // Состояние поискового индекса и его пересборка
     [
@@ -17,13 +20,13 @@ return [
         },
         '_meta' => [
             'placements' => [
-                [
-                    'location'      => 'left-sidebar',
-                    'group'         => 'Search',
-                    'groupIcon'     => 'bi bi-search',
-                    'priority'      => 100,
-                    'groupPriority' => 700,
-                ],
+                new AdminMenuPlacement(
+                    location: AdminMenuLocation::RightSidebar,
+                    group: 'Search',
+                    groupIcon: 'bi bi-search',
+                    groupPriority: 700,
+                    priority: 100,
+                ),
             ],
         ],
     ],
