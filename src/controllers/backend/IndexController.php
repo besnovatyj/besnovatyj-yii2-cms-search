@@ -12,12 +12,14 @@ use Besnovatyj\Search\entities\SearchDocumentRecord;
 use Besnovatyj\Search\services\EngineRegistry;
 use Besnovatyj\Search\services\EngineResolver;
 use Besnovatyj\Search\services\Indexer;
+use Besnovatyj\Search\services\IndexPurger;
 use Besnovatyj\Search\services\IndexState;
 use Besnovatyj\Search\services\SourceRegistry;
 use Besnovatyj\Search\settings\SearchSettings;
 use Throwable;
 use Yii;
 use yii\filters\VerbFilter;
+use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\Response;
 use yii\web\ServerErrorHttpException;
@@ -39,6 +41,7 @@ class IndexController extends Controller
         private readonly SourceRegistry $sources,
         private readonly IndexState $state,
         private readonly Indexer $indexer,
+        private readonly IndexPurger $purger,
         private readonly SearchSettings $settings,
         $config = [],
     ) {
@@ -52,6 +55,8 @@ class IndexController extends Controller
                 'class' => VerbFilter::class,
                 'actions' => [
                     'rebuild' => ['POST'],
+                    'purge' => ['POST'],
+                    'storage' => ['POST'],
                 ],
             ],
         ];
@@ -155,6 +160,71 @@ class IndexController extends Controller
                 'Собран %s ядром «%s»',
                 Yii::$app->formatter->asRelativeTime(time()),
                 $label,
+            ),
+        ];
+    }
+
+    /**
+     * Стереть всё поисковое: каталог документов и данные всех установленных ядер.
+     *
+     * Пересборки следом нет намеренно: очистка нужна, чтобы освободить место (например, перед
+     * дампом базы), а собрать индекс заново — отдельное осознанное действие.
+     *
+     * Как и {@see actionRebuild()}, один экшен с двумя конвертами: AJAX-запрос менеджера очистки
+     * (`yii2-cms-clear-manager`, строка объявлена в `params.endpoints.clear`) получает JSON
+     * `{status, message}`, а форма на странице состояния — флеш и редирект. Ошибка AJAX уходит
+     * нативным JSON-конвертом Yii с реальным HTTP-статусом.
+     *
+     * @throws ServerErrorHttpException если очистка не удалась — причина уже в журнале.
+     */
+    public function actionPurge(): Response|array
+    {
+        if (Yii::$app->request->getIsAjax()) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+
+            try {
+                $this->purger->purge();
+            } catch (Throwable $e) {
+                Yii::error('Очистка поискового индекса не удалась: ' . $e->getMessage(), 'search/index');
+
+                throw new ServerErrorHttpException('Не удалось очистить поисковый индекс: ' . $e->getMessage(), 0, $e);
+            }
+
+            return ['status' => 'success', 'message' => 'Поисковый индекс очищен'];
+        }
+
+        try {
+            $this->purger->purge();
+            Yii::$app->session->setFlash('success', 'Поисковый индекс очищен. Соберите его заново, когда понадобится.');
+        } catch (Throwable $e) {
+            Yii::error('Очистка поискового индекса не удалась: ' . $e->getMessage(), 'search/index');
+            Yii::$app->session->setFlash('error', 'Не удалось очистить поисковый индекс: ' . $e->getMessage());
+        }
+
+        return $this->redirect(['index']);
+    }
+
+    /**
+     * Сколько занимает поисковое — строка «Данные» в менеджере очистки.
+     *
+     * Ответ по соглашению `yii2-cms-clear-manager`: `{status: 'success', data: '<готовая строка>'}`.
+     *
+     * @throws BadRequestHttpException если запрос не AJAX
+     */
+    public function actionStorage(): array
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        if (!Yii::$app->request->getIsAjax()) {
+            throw new BadRequestHttpException('Ожидается AJAX-запрос.');
+        }
+
+        return [
+            'status' => 'success',
+            'data' => sprintf(
+                'Документов: %s · %s',
+                Yii::$app->formatter->asInteger($this->state->catalogCount()),
+                Yii::$app->formatter->asShortSize($this->purger->storageBytes(), 2),
             ),
         ];
     }

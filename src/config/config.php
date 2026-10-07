@@ -77,5 +77,21 @@ return [
         'snippetLength' => 240,
 
         'directories' => false,
+
+        /**
+         * Строка в менеджере очистки (`yii2-cms-clear-manager`): он собирает `params.endpoints.clear`
+         * всех модулей и рисует по строке на каждый. Всё поисковое восстановимо пересборкой, поэтому
+         * его можно стереть, например, перед дампом базы. Пересборка — отдельное действие на странице
+         * «Поисковый индекс».
+         */
+        'endpoints' => [
+            'clear' => [
+                'index' => [
+                    'rowTitle' => 'Поисковый индекс',
+                    'getData'  => '/Search/backend/index/storage',
+                    'clear'    => '/Search/backend/index/purge',
+                ],
+            ],
+        ],
     ],
 ];

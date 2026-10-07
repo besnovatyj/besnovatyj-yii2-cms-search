@@ -235,16 +235,28 @@ $yesNo = static fn (bool $value): string => $value
         </table>
     </div>
 
-    <?= Html::beginForm(['rebuild'], 'post') ?>
-        <?= Html::submitButton('Собрать индекс заново', [
-            'class' => 'btn btn-primary',
-            'data' => [
-                'confirm' => 'Полная пересборка индекса. На время сборки поиск продолжает работать по '
-                    . 'старому индексу. Продолжить?',
-            ],
-        ]) ?>
-        <span class="ms-2 text-muted small">
-            На большом объёме используйте консоль: <code>php yii Search/index/rebuild</code>
-        </span>
-    <?= Html::endForm() ?>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <?= Html::beginForm(['rebuild'], 'post') ?>
+            <?= Html::submitButton('Собрать индекс заново', [
+                'class' => 'btn btn-primary',
+                'data' => [
+                    'confirm' => 'Полная пересборка индекса. На время сборки поиск продолжает работать по '
+                        . 'старому индексу. Продолжить?',
+                ],
+            ]) ?>
+            <span class="ms-2 text-muted small">
+                На большом объёме используйте консоль: <code>php yii Search/index/rebuild</code>
+            </span>
+        <?= Html::endForm() ?>
+
+        <?= Html::beginForm(['purge'], 'post', ['class' => 'ms-auto']) ?>
+            <?= Html::submitButton('Очистить индекс', [
+                'class' => 'btn btn-danger',
+                'data' => [
+                    'confirm' => 'Будут стёрты каталог документов и индексы всех установленных ядер. '
+                        . 'До следующей пересборки поиск на сайте ничего не найдёт. Продолжить?',
+                ],
+            ]) ?>
+        <?= Html::endForm() ?>
+    </div>
 </div>
